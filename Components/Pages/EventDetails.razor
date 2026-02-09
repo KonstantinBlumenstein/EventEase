@@ -1,0 +1,97 @@
+@page "/event/{EventId:int}"
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+@inject NavigationManager Navigation
+
+<PageTitle>Event Details - EventEase</PageTitle>
+
+@if (eventItem == null)
+{
+    <p><em>Loading event details...</em></p>
+}
+else
+{
+    <div class="event-details-container">
+        <button class="btn-back" @onclick="GoBack">← Back to Events</button>
+        
+        <div class="event-hero">
+            <img src="@eventItem.ImageUrl" alt="@eventItem.Name" />
+        </div>
+
+        <div class="event-details-content">
+            <span class="event-category">@eventItem.Category</span>
+            <h1>@eventItem.Name</h1>
+            
+            <div class="event-meta">
+                <div class="meta-item">
+                    <strong>📅 Date:</strong>
+                    <span>@eventItem.Date.ToString("MMMM dd, yyyy - h:mm tt")</span>
+                </div>
+                <div class="meta-item">
+                    <strong>📍 Location:</strong>
+                    <span>@eventItem.Location</span>
+                </div>
+                <div class="meta-item">
+                    <strong>👥 Capacity:</strong>
+                    <span>@eventItem.RegisteredAttendees / @eventItem.Capacity</span>
+                </div>
+            </div>
+
+            <div class="event-description">
+                <h2>About This Event</h2>
+                <p>@eventItem.Description</p>
+            </div>
+
+            <div class="registration-section">
+                @if (isRegistered)
+                {
+                    <div class="success-message">
+                        ✓ Successfully registered for this event!
+                    </div>
+                }
+                else if (eventItem.RegisteredAttendees >= eventItem.Capacity)
+                {
+                    <button class="btn-register disabled" disabled>Event Full</button>
+                }
+                else
+                {
+                    <button class="btn-register" @onclick="RegisterForEvent">
+                        Register for Event
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    private Event? eventItem;
+    private bool isRegistered = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        eventItem = await EventService.GetEventByIdAsync(EventId);
+    }
+
+    private async Task RegisterForEvent()
+    {
+        if (eventItem != null)
+        {
+            var success = await EventService.RegisterForEventAsync(EventId);
+            if (success)
+            {
+                isRegistered = true;
+                eventItem.RegisteredAttendees++;
+            }
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

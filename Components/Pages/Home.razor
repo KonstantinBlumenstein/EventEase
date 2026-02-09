@@ -1,0 +1,58 @@
+﻿@page "/"
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+@inject NavigationManager Navigation
+
+<PageTitle>EventEase - Browse Events</PageTitle>
+
+<div class="event-list-container">
+    <h1>Upcoming Events</h1>
+    <p class="subtitle">Discover and register for amazing events</p>
+
+    @if (events == null)
+    {
+        <p><em>Loading events...</em></p>
+    }
+    else if (!events.Any())
+    {
+        <p>No events available at the moment.</p>
+    }
+    else
+    {
+        <div class="events-grid">
+            @foreach (var evt in events)
+            {
+                <div class="event-card" @onclick="() => ViewEventDetails(evt.Id)">
+                    <img src="@evt.ImageUrl" alt="@evt.Name" />
+                    <div class="event-content">
+                        <span class="event-category">@evt.Category</span>
+                        <h3>@evt.Name</h3>
+                        <div class="event-info">
+                            <p><strong>📅 Date:</strong> @evt.Date.ToString("MMMM dd, yyyy")</p>
+                            <p><strong>📍 Location:</strong> @evt.Location</p>
+                        </div>
+                        <div class="event-footer">
+                            <span class="capacity">@evt.RegisteredAttendees / @evt.Capacity attendees</span>
+                            <button class="btn-view">View Details →</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Event>? events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await EventService.GetAllEventsAsync();
+    }
+
+    private void ViewEventDetails(int eventId)
+    {
+        Navigation.NavigateTo($"/event/{eventId}");
+    }
+}
