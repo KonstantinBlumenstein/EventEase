@@ -2,6 +2,7 @@
 @using EventEase.Models
 @using EventEase.Services
 @inject EventService EventService
+@inject UserSessionService UserSession
 @inject NavigationManager Navigation
 
 <PageTitle>Event Details - EventEase</PageTitle>
@@ -14,7 +15,7 @@ else
 {
     <div class="event-details-container">
         <button class="btn-back" @onclick="GoBack">← Back to Events</button>
-        
+
         <div class="event-hero">
             <img src="@eventItem.ImageUrl" alt="@eventItem.Name" />
         </div>
@@ -22,7 +23,7 @@ else
         <div class="event-details-content">
             <span class="event-category">@eventItem.Category</span>
             <h1>@eventItem.Name</h1>
-            
+
             <div class="event-meta">
                 <div class="meta-item">
                     <strong>📅 Date:</strong>
@@ -49,16 +50,61 @@ else
                     <div class="success-message">
                         ✓ Successfully registered for this event!
                     </div>
+                    <p class="registered-info">
+                        Registered as: <strong>@registrationModel.Name</strong> (@registrationModel.Email)
+                    </p>
+                    <a href="/event/@EventId/attendees" class="btn-view-attendees">
+                        View All Attendees →
+                    </a>
                 }
                 else if (eventItem.RegisteredAttendees >= eventItem.Capacity)
                 {
-                    <button class="btn-register disabled" disabled>Event Full</button>
+                    <div class="event-full-message">
+                        <strong>Event Full</strong>
+                        <p>This event has reached maximum capacity.</p>
+                    </div>
                 }
                 else
                 {
-                    <button class="btn-register" @onclick="RegisterForEvent">
-                        Register for Event
-                    </button>
+                    <h3>Register for This Event</h3>
+                    <EditForm Model="@registrationModel" OnValidSubmit="HandleValidSubmit" class="registration-form">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
+
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <InputText id="name" @bind-Value="registrationModel.Name" class="form-control" placeholder="Enter your full name" />
+                            <ValidationMessage For="@(() => registrationModel.Name)" class="validation-message" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <InputText id="email" @bind-Value="registrationModel.Email" class="form-control" placeholder="Enter your email" />
+                            <ValidationMessage For="@(() => registrationModel.Email)" class="validation-message" />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number (Optional)</label>
+                            <InputText id="phone" @bind-Value="registrationModel.PhoneNumber" class="form-control" placeholder="Enter your phone number" />
+                            <ValidationMessage For="@(() => registrationModel.PhoneNumber)" class="validation-message" />
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="error-message">@errorMessage</div>
+                        }
+
+                        <button type="submit" class="btn-register" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span>Registering...</span>
+                            }
+                            else
+                            {
+                                <span>Register for Event</span>
+                            }
+                        </button>
+                    </EditForm>
                 }
             </div>
         </div>
@@ -70,24 +116,57 @@ else
     public int EventId { get; set; }
 
     private Event? eventItem;
+    private Registration registrationModel = new();
     private bool isRegistered = false;
+    private bool isSubmitting = false;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
         eventItem = await EventService.GetEventByIdAsync(EventId);
-    }
+        registrationModel.EventId = EventId;
 
-    private async Task RegisterForEvent()
-    {
-        if (eventItem != null)
+        // Check if user already registered in this session
+        isRegistered = UserSession.IsRegisteredForEvent(EventId);
+        if (isRegistered)
         {
-            var success = await EventService.RegisterForEventAsync(EventId);
-            if (success)
+            var existingReg = UserSession.GetRegistrationForEvent(EventId);
+            if (existingReg != null)
             {
-                isRegistered = true;
-                eventItem.RegisteredAttendees++;
+                registrationModel = existingReg;
             }
         }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (eventItem == null) return;
+
+        isSubmitting = true;
+        errorMessage = null;
+
+        // Check if email is already registered for this event
+        var alreadyRegistered = await EventService.IsEmailRegisteredForEventAsync(EventId, registrationModel.Email);
+        if (alreadyRegistered)
+        {
+            errorMessage = "This email is already registered for this event.";
+            isSubmitting = false;
+            return;
+        }
+
+        var success = await EventService.RegisterAttendeeAsync(registrationModel);
+        if (success)
+        {
+            UserSession.AddRegistration(registrationModel);
+            isRegistered = true;
+            eventItem.RegisteredAttendees++;
+        }
+        else
+        {
+            errorMessage = "Registration failed. The event may be full.";
+        }
+
+        isSubmitting = false;
     }
 
     private void GoBack()

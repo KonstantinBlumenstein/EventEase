@@ -6,7 +6,6 @@ C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.Assembl
 C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.AssemblyInfo.cs
 C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.csproj.CoreCompileInputs.cache
 C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.sourcelink.json
 C:\Users\timas\Desktop\Development\EventEase\bin\Debug\net10.0\appsettings.Development.json
 C:\Users\timas\Desktop\Development\EventEase\bin\Debug\net10.0\appsettings.json
 C:\Users\timas\Desktop\Development\EventEase\bin\Debug\net10.0\EventEase.staticwebassets.runtime.json
@@ -83,4 +82,4 @@ C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\refint\EventEase.
 C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.pdb
 C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\EventEase.genruntimeconfig.cache
 C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\ref\EventEase.dll
-C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\compressed\05qdm7rlla-{0}-voeynny1ok-voeynny1ok.gz
+C:\Users\timas\Desktop\Development\EventEase\obj\Debug\net10.0\compressed\05qdm7rlla-{0}-bvlpdecrgf-bvlpdecrgf.gz

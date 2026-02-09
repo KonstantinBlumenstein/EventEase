@@ -13,5 +13,6 @@ namespace EventEase.Models
         public string Category { get; set; } = string.Empty;
         public int Capacity { get; set; }
         public int RegisteredAttendees { get; set; }
+        public List<Registration> Attendees { get; set; } = new List<Registration>();
     }
 }

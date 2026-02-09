@@ -1,0 +1,109 @@
+@page "/event/{EventId:int}/attendees"
+@using EventEase.Models
+@using EventEase.Services
+@inject EventService EventService
+@inject NavigationManager Navigation
+
+<PageTitle>Attendance Tracker - EventEase</PageTitle>
+
+<div class="attendance-container">
+    <button class="btn-back" @onclick="GoBack">← Back to Event</button>
+
+    @if (eventItem == null)
+    {
+        <p><em>Loading attendance data...</em></p>
+    }
+    else
+    {
+        <div class="attendance-header">
+            <h1>Attendance Tracker</h1>
+            <h2>@eventItem.Name</h2>
+            <div class="attendance-stats">
+                <div class="stat-card">
+                    <span class="stat-number">@attendees.Count</span>
+                    <span class="stat-label">Registered</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">@eventItem.Capacity</span>
+                    <span class="stat-label">Capacity</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number">@(eventItem.Capacity - attendees.Count)</span>
+                    <span class="stat-label">Available</span>
+                </div>
+            </div>
+            <div class="capacity-bar">
+                <div class="capacity-fill" style="width: @GetCapacityPercentage()%"></div>
+            </div>
+            <p class="capacity-text">@GetCapacityPercentage()% Full</p>
+        </div>
+
+        <div class="attendees-section">
+            <h3>Registered Attendees</h3>
+            @if (!attendees.Any())
+            {
+                <p class="no-attendees">No attendees have registered yet.</p>
+            }
+            else
+            {
+                <div class="attendees-table">
+                    <div class="table-header">
+                        <span class="col-num">#</span>
+                        <span class="col-name">Name</span>
+                        <span class="col-email">Email</span>
+                        <span class="col-date">Registered</span>
+                    </div>
+                    @foreach (var (attendee, index) in attendees.Select((a, i) => (a, i)))
+                    {
+                        <div class="table-row">
+                            <span class="col-num">@(index + 1)</span>
+                            <span class="col-name">@attendee.Name</span>
+                            <span class="col-email">@MaskEmail(attendee.Email)</span>
+                            <span class="col-date">@attendee.RegisteredAt.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int EventId { get; set; }
+
+    private Event? eventItem;
+    private List<Registration> attendees = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        eventItem = await EventService.GetEventByIdAsync(EventId);
+        attendees = await EventService.GetEventAttendeesAsync(EventId);
+    }
+
+    private int GetCapacityPercentage()
+    {
+        if (eventItem == null || eventItem.Capacity == 0) return 0;
+        return (int)((double)attendees.Count / eventItem.Capacity * 100);
+    }
+
+    private string MaskEmail(string email)
+    {
+        if (string.IsNullOrEmpty(email)) return "";
+        var parts = email.Split('@');
+        if (parts.Length != 2) return email;
+
+        var localPart = parts[0];
+        var domain = parts[1];
+
+        if (localPart.Length <= 2)
+            return $"{localPart}***@{domain}";
+
+        return $"{localPart[0]}***{localPart[^1]}@{domain}";
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo($"/event/{EventId}");
+    }
+}

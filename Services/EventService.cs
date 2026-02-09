@@ -75,5 +75,39 @@ namespace EventEase.Services
                 return Task.FromResult(false);
             }
         }
+
+        public Task<bool> RegisterAttendeeAsync(Registration registration)
+        {
+            lock (_lock)
+            {
+                var eventItem = _events.FirstOrDefault(e => e.Id == registration.EventId);
+                if (eventItem != null && eventItem.RegisteredAttendees < eventItem.Capacity)
+                {
+                    registration.Id = eventItem.Attendees.Count + 1;
+                    registration.RegisteredAt = DateTime.Now;
+                    eventItem.Attendees.Add(registration);
+                    eventItem.RegisteredAttendees++;
+                    return Task.FromResult(true);
+                }
+                return Task.FromResult(false);
+            }
+        }
+
+        public Task<List<Registration>> GetEventAttendeesAsync(int eventId)
+        {
+            var eventItem = _events.FirstOrDefault(e => e.Id == eventId);
+            return Task.FromResult(eventItem?.Attendees ?? new List<Registration>());
+        }
+
+        public Task<bool> IsEmailRegisteredForEventAsync(int eventId, string email)
+        {
+            var eventItem = _events.FirstOrDefault(e => e.Id == eventId);
+            if (eventItem != null)
+            {
+                return Task.FromResult(eventItem.Attendees.Any(a =>
+                    a.Email.Equals(email, StringComparison.OrdinalIgnoreCase)));
+            }
+            return Task.FromResult(false);
+        }
     }
 }
